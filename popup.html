@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Figma Return</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --fg: #1e1e1e;
+        --muted: #6b6b6b;
+        --border: #e2e2e2;
+        --accent: #0d99ff;
+        --accent-fg: #ffffff;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #2c2c2c;
+          --fg: #f0f0f0;
+          --muted: #a0a0a0;
+          --border: #444444;
+        }
+      }
+      body {
+        width: 300px;
+        margin: 0;
+        padding: 12px;
+        font: 13px/1.4 system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        box-sizing: border-box;
+      }
+      h1 {
+        font-size: 13px;
+        font-weight: 600;
+        margin: 0 0 8px;
+      }
+      .label {
+        color: var(--muted);
+        font-size: 11px;
+        margin-bottom: 4px;
+      }
+      #url {
+        padding: 6px 8px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 10px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+      }
+      #url.empty {
+        font-family: inherit;
+        color: var(--muted);
+      }
+      button {
+        width: 100%;
+        padding: 7px 10px;
+        border: 0;
+        border-radius: 6px;
+        background: var(--accent);
+        color: var(--accent-fg);
+        font: inherit;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Figma Return</h1>
+    <div class="label">Last design</div>
+    <div id="url" class="empty">Nothing saved yet</div>
+    <button id="go" disabled>Return to last design</button>
+    <script src="popup.js"></script>
+  </body>
+</html>

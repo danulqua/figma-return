@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+*.log
+
+# Editors
+.vscode/
+.idea/
+
+# Chrome "Pack extension" outputs (*.pem is the private signing key: never commit it)
+*.zip
+*.crx
+*.pem
+
+# Firefox signed add-ons and web-ext build output
+*.xpi
+web-ext-artifacts/
+
+# Store zips built by tools/build.mjs
+dist/

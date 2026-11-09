@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Figma Return",
+  "version": "1.0.0",
+  "description": "After Figma logs you out and you log back in, returns the tab to the design you were working on.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": ["tabs", "storage"],
+  "host_permissions": ["https://www.figma.com/*", "https://figma.com/*"],
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"],
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Figma Return",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    },
+    "default_popup": "popup.html"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "figma-return@danulqua",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": { "required": ["none"] }
+    }
+  }
+}

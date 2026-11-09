@@ -1,0 +1,151 @@
+# Actions → Release → Run workflow → pick patch / minor / major.
+# Bumps the version, tags it, creates a GitHub Release with both zips,
+# then uploads to the Chrome Web Store and addons.mozilla.org.
+# A store job whose secrets aren't set skips with a notice (see PUBLISHING.md).
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+
+concurrency: release
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Tests
+        run: node --test
+
+      - name: Bump version
+        id: bump
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: echo "version=$(node tools/bump-version.mjs "$BUMP")" >> "$GITHUB_OUTPUT"
+
+      - name: Build store zips
+        run: node tools/build.mjs
+
+      - name: Lint the Firefox build
+        run: npx --yes web-ext@10.8.0 lint --source-dir dist/firefox
+
+      - name: Commit, tag and push
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Release v$VERSION"
+          git tag "v$VERSION"
+          git push origin HEAD:main "v$VERSION"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zips
+          path: dist/*.zip
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: gh release create "v$VERSION" dist/*.zip --title "v$VERSION" --generate-notes
+
+  chrome:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check secrets
+        id: check
+        env:
+          KEY: ${{ secrets.CWS_SERVICE_ACCOUNT_KEY }}
+          PUBLISHER: ${{ secrets.CWS_PUBLISHER_ID }}
+          ITEM: ${{ secrets.CWS_EXTENSION_ID }}
+        run: |
+          if [ -n "$KEY" ] && [ -n "$PUBLISHER" ] && [ -n "$ITEM" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice title=Chrome Web Store skipped::Secrets not set: CWS_SERVICE_ACCOUNT_KEY, CWS_PUBLISHER_ID, CWS_EXTENSION_ID. See PUBLISHING.md."
+          fi
+
+      - if: steps.check.outputs.ready == 'true'
+        uses: actions/checkout@v5
+        with:
+          ref: v${{ needs.build.outputs.version }}
+
+      - if: steps.check.outputs.ready == 'true'
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - if: steps.check.outputs.ready == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: zips
+          path: dist
+
+      - if: steps.check.outputs.ready == 'true'
+        name: Upload and publish
+        env:
+          CWS_SERVICE_ACCOUNT_KEY: ${{ secrets.CWS_SERVICE_ACCOUNT_KEY }}
+          CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+          CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: node tools/publish-chrome.mjs "dist/figma-return-chrome-$VERSION.zip"
+
+  firefox:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check secrets
+        id: check
+        env:
+          KEY: ${{ secrets.AMO_API_KEY }}
+          SECRET: ${{ secrets.AMO_API_SECRET }}
+        run: |
+          if [ -n "$KEY" ] && [ -n "$SECRET" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice title=Firefox Add-ons skipped::Secrets not set: AMO_API_KEY, AMO_API_SECRET. See PUBLISHING.md."
+          fi
+
+      - if: steps.check.outputs.ready == 'true'
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - if: steps.check.outputs.ready == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: zips
+          path: dist
+
+      - if: steps.check.outputs.ready == 'true'
+        name: Submit to addons.mozilla.org
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_API_KEY }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_API_SECRET }}
+          VERSION: ${{ needs.build.outputs.version }}
+        # --approval-timeout=0: submit and exit; don't wait for Mozilla's review.
+        run: |
+          unzip -q "dist/figma-return-firefox-$VERSION.zip" -d firefox
+          npx --yes web-ext@10.8.0 sign --channel=listed --approval-timeout=0 --source-dir firefox --artifacts-dir web-ext-artifacts

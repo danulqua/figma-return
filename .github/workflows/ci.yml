@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Tests
+        run: node --test
+
+      - name: Build store zips
+        run: node tools/build.mjs
+
+      - name: Lint the Firefox build
+        run: npx --yes web-ext@10.8.0 lint --source-dir dist/firefox
