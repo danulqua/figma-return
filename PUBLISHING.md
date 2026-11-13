@@ -59,7 +59,7 @@ The Release workflow logs in with a Google Cloud **service account**.
 
    Then delete the downloaded key file.
 
-To try the upload from your machine: `CWS_SERVICE_ACCOUNT_KEY="$(cat key.json)" CWS_PUBLISHER_ID=... CWS_EXTENSION_ID=... node tools/publish-chrome.mjs dist/figma-return-chrome-<version>.zip`. This submits a real version, and the store rejects a version number it already has.
+To try the upload from your machine, fill in the Chrome values in `.env` (see [Local credentials](#local-credentials)) and run `node --env-file=.env tools/publish-chrome.mjs dist/figma-return-chrome-<version>.zip`. This submits a real version, and the store rejects a version number it already has.
 
 ## Firefox Add-ons (AMO)
 
@@ -83,7 +83,19 @@ The add-on ID `figma-return@danulqua` comes from `manifest.json`. Don't change i
    | `AMO_API_KEY` | JWT issuer (looks like `user:12345:678`) |
    | `AMO_API_SECRET` | JWT secret |
 
-To try the upload from your machine: `AMO_API_KEY=... AMO_API_SECRET=... node tools/publish-firefox.mjs dist/figma-return-firefox-<version>.zip`. This submits a real version, and AMO rejects a version number it already has. Re-submitting the current version is a safe way to check the credentials: a "Version already exists" error means they work. To check the package without submitting, run `npx web-ext@10.8.0 lint --source-dir dist/firefox` (needs no credentials).
+To try the upload from your machine, fill in the Firefox values in `.env` (see [Local credentials](#local-credentials)) and run `node --env-file=.env tools/publish-firefox.mjs dist/figma-return-firefox-<version>.zip`. This submits a real version, and AMO rejects a version number it already has. Re-submitting the current version is a safe way to check the credentials: a "Version already exists" error means they work. To check the package without submitting, run `npx web-ext@10.8.0 lint --source-dir dist/firefox` (needs no credentials).
+
+## Local credentials
+
+The publish scripts read their credentials from environment variables. To keep them in a file:
+
+```sh
+cp .env.example .env
+```
+
+Fill in `.env`. It is git-ignored, so it is never committed. `CWS_SERVICE_ACCOUNT_KEY` has to be the JSON key on a single line in single quotes. `jq -c . key.json` prints it that way. After that you can delete the downloaded key file.
+
+GitHub Actions doesn't use `.env`; it reads the same names from the repository secrets.
 
 ## Releasing a new version
 

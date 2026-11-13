@@ -20,3 +20,6 @@ web-ext-artifacts/
 
 # Store zips built by tools/build.mjs
 dist/
+
+# Local store credentials (see .env.example)
+.env
