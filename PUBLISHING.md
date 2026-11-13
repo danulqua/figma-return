@@ -45,9 +45,9 @@ The Release workflow logs in with a Google Cloud **service account**.
 2. **APIs & Services → Library** → search **Chrome Web Store API** → **Enable**.
 3. **IAM & Admin → Service Accounts → Create service account**. Any name. It needs no Cloud roles.
 4. Open the service account → **Keys → Add key → Create new key → JSON**. A `.json` file downloads. Treat it like a password.
-5. In the Chrome Web Store Developer Dashboard → **Account**, add the service account's email (`...@....iam.gserviceaccount.com`). A publisher can have only one service account.
+5. In the Chrome Web Store Developer Dashboard → **Settings → Service account**, add the service account's email (`...@....iam.gserviceaccount.com`). A publisher can have only one service account.
 6. Find the IDs:
-   - **Publisher ID**: in the Dashboard under **Account**, and in the Dashboard URL after `/devconsole/`.
+   - **Publisher ID**: in the Dashboard under **Settings**, and in the Dashboard URL after `/devconsole/`.
    - **Item ID**: the 32-letter extension ID on the item's page in the Dashboard.
 7. Add GitHub secrets (repo **Settings → Secrets and variables → Actions → New repository secret**):
 
@@ -82,6 +82,8 @@ The add-on ID `figma-return@danulqua` comes from `manifest.json`. Don't change i
    | --- | --- |
    | `AMO_API_KEY` | JWT issuer (looks like `user:12345:678`) |
    | `AMO_API_SECRET` | JWT secret |
+
+To try the upload from your machine: `AMO_API_KEY=... AMO_API_SECRET=... node tools/publish-firefox.mjs dist/figma-return-firefox-<version>.zip`. This submits a real version, and AMO rejects a version number it already has. Re-submitting the current version is a safe way to check the credentials: a "Version already exists" error means they work. To check the package without submitting, run `npx web-ext@10.8.0 lint --source-dir dist/firefox` (needs no credentials).
 
 ## Releasing a new version
 

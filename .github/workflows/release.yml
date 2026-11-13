@@ -142,10 +142,7 @@ jobs:
       - if: steps.check.outputs.ready == 'true'
         name: Submit to addons.mozilla.org
         env:
-          WEB_EXT_API_KEY: ${{ secrets.AMO_API_KEY }}
-          WEB_EXT_API_SECRET: ${{ secrets.AMO_API_SECRET }}
+          AMO_API_KEY: ${{ secrets.AMO_API_KEY }}
+          AMO_API_SECRET: ${{ secrets.AMO_API_SECRET }}
           VERSION: ${{ needs.build.outputs.version }}
-        # --approval-timeout=0: submit and exit; don't wait for Mozilla's review.
-        run: |
-          unzip -q "dist/figma-return-firefox-$VERSION.zip" -d firefox
-          npx --yes web-ext@10.8.0 sign --channel=listed --approval-timeout=0 --source-dir firefox --artifacts-dir web-ext-artifacts
+        run: node tools/publish-firefox.mjs "dist/figma-return-firefox-$VERSION.zip"
